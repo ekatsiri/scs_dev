@@ -8,8 +8,10 @@ import subprocess
 
 from scs_core.data.localized_datetime import LocalizedDatetime
 
-from scs_core.location.gpgga import GPGGA
-from scs_core.location.gps_location import GPSLocation
+from scs_core.location.timezone_conf import TimezoneConf
+
+from scs_core.position.gpgga import GPGGA
+from scs_core.position.gps_location import GPSLocation
 
 from scs_core.sample.status_sample import StatusSample
 
@@ -19,6 +21,7 @@ from scs_core.sync.schedule import Schedule
 
 from scs_core.sys.system_temp import SystemTemp
 from scs_core.sys.uptime_datum import UptimeDatum
+
 from scs_host.sys.host import Host
 
 
@@ -31,7 +34,7 @@ class StatusSampler(Sampler):
 
     # ----------------------------------------------------------------------------------------------------------------
 
-    def __init__(self, runner, system_id, board, gps):
+    def __init__(self, runner, system_id, board, gps, psu):
         """
         Constructor
         """
@@ -40,6 +43,7 @@ class StatusSampler(Sampler):
         self.__system_id = system_id
         self.__board = board
         self.__gps = gps
+        self.__psu = psu
 
 
     # ----------------------------------------------------------------------------------------------------------------
@@ -47,15 +51,19 @@ class StatusSampler(Sampler):
     def sample(self):
         tag = self.__system_id.message_tag()
 
-        # location...
-        location = None
+        # timezone...
+        timezone_conf = TimezoneConf.load_from_host(Host)
+        timezone = timezone_conf.timezone()
+
+        # position...
+        position = None
 
         if self.__gps:
             try:
                 self.__gps.open()
 
                 gga = self.__gps.report(GPGGA)
-                location = GPSLocation.construct(gga)
+                position = GPSLocation.construct(gga)
 
             finally:
                 self.__gps.close()
@@ -79,14 +87,17 @@ class StatusSampler(Sampler):
 
         uptime = UptimeDatum.construct_from_report(None, report)
 
+        # psu...
+        psu_status = self.__psu.status() if self.__psu else None
+
         # datum...
         recorded = LocalizedDatetime.now()      # after sampling, so that we can monitor resource contention
 
-        return StatusSample(tag, recorded, location, temperature, schedule, uptime)
+        return StatusSample(tag, recorded, timezone, position, temperature, schedule, uptime, psu_status)
 
 
     # ----------------------------------------------------------------------------------------------------------------
 
     def __str__(self, *args, **kwargs):
-        return "StatusSampler:{runner:%s, system_id:%s, board:%s, gps:%s}" % \
-               (self.runner, self.__system_id, self.__board, self.__gps)
+        return "StatusSampler:{runner:%s, system_id:%s, board:%s, gps:%s, psu:%s}" % \
+               (self.runner, self.__system_id, self.__board, self.__gps, self.__psu)
