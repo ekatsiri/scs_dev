@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 
 """
-Created on 29 May 2017
+Created on 20 Feb 2017
 
 @author: Bruno Beloff (bruno.beloff@southcoastscience.com)
 
 command line example:
-./uptime.py
+./led.py -s G
 """
 
-import subprocess
 import sys
 
 from scs_core.data.json import JSONify
-from scs_core.data.localized_datetime import LocalizedDatetime
 from scs_core.sys.exception_report import ExceptionReport
-from scs_core.sys.uptime_datum import UptimeDatum
-from scs_dev.cmd.cmd_sampler import CmdSampler
+
+from scs_dev.cmd.cmd_led import CmdLED
+
+from scs_dfe.display.led import LED
+
+from scs_host.bus.i2c import I2C
+from scs_host.sys.host import Host
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -26,32 +29,39 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------------------------------------------------
     # cmd...
 
-    cmd = CmdSampler()
+    cmd = CmdLED()
+
+    if not cmd.is_valid():
+        cmd.print_help(sys.stderr)
+        exit(2)
 
     if cmd.verbose:
         print(cmd, file=sys.stderr)
+        sys.stderr.flush()
 
     try:
         # ------------------------------------------------------------------------------------------------------------
+        # resources...
+
+        I2C.open(Host.I2C_SENSORS)
+
+        led = LED()
+
+
+        # ------------------------------------------------------------------------------------------------------------
         # run...
 
-        now = LocalizedDatetime.now()
+        if cmd.set():
+            led.colour = cmd.colour
 
-        raw = subprocess.check_output('uptime')
-        report = raw.decode()
-
-        datum = UptimeDatum.construct_from_report(now, report)
-
-        print(JSONify.dumps(datum))
+        print(led.colour)
 
 
     # ----------------------------------------------------------------------------------------------------------------
     # end...
 
-    except KeyboardInterrupt:
-        if cmd.verbose:
-            print("uptime: KeyboardInterrupt", file=sys.stderr)
-
     except Exception as ex:
         print(JSONify.dumps(ExceptionReport.construct(ex)), file=sys.stderr)
 
+    finally:
+        I2C.close()

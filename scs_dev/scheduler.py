@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
         if schedule is None:
             print("Schedule not available.", file=sys.stderr)
-            exit()
+            exit(1)
 
         if cmd.verbose:
             print(schedule, file=sys.stderr)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------------------------------------------------
     # end...
 
-    except KeyboardInterrupt as ex:
+    except KeyboardInterrupt:
         if cmd.verbose:
             print("scheduler: KeyboardInterrupt", file=sys.stderr)
 
