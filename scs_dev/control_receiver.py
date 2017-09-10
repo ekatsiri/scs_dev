@@ -32,6 +32,8 @@ from scs_dev.cmd.cmd_control_receiver import CmdControlReceiver
 from scs_host.sys.host import Host
 
 
+# TODO: replace SystemID with generated shared secret
+
 # --------------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -128,10 +130,10 @@ if __name__ == '__main__':
                 sys.stdout.flush()
 
                 if cmd.verbose:
-                    print(receipt, file=sys.stderr)
+                    print(JSONify.dumps(receipt), file=sys.stderr)
                     sys.stderr.flush()
 
-            # execute immediate commands...
+            # execute deferred commands...
             if command.cmd in deferred_commands:
                 command.execute(Host)
 

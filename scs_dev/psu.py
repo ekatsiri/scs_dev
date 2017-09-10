@@ -75,6 +75,9 @@ if __name__ == '__main__':
     # end...
 
     except KeyboardInterrupt:
+        if cmd.prompt:
+            print("", file=sys.stderr)
+
         if cmd.verbose:
             print("psu: KeyboardInterrupt", file=sys.stderr)
 
