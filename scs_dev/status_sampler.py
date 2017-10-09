@@ -56,7 +56,7 @@ if __name__ == '__main__':
         # resources...
 
         # SystemID...
-        system_id = SystemID.load_from_host(Host)
+        system_id = SystemID.load(Host)
 
         if system_id is None:
             print("SystemID not available.", file=sys.stderr)
@@ -69,14 +69,14 @@ if __name__ == '__main__':
         board = MCP9808(True)
 
         # GPS...
-        gps_conf = GPSConf.load_from_host(Host)
+        gps_conf = GPSConf.load(Host)
         gps = gps_conf.gps()
 
         # PSU...
         psu_conf = PSUConf.load_from_host(Host)
         psu = psu_conf.psu(Host)
 
-        if cmd.verbose:
+        if cmd.verbose and psu:
             print(psu, file=sys.stderr)
 
         # runner...

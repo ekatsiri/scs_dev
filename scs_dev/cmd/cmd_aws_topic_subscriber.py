@@ -1,36 +1,34 @@
 """
-Created on 23 Mar 2017
+Created on 19 Nov 2016
 
 @author: Bruno Beloff (bruno.beloff@southcoastscience.com)
 """
 
 import optparse
 
-from scs_core.osio.config.project import Project
+from scs_core.aws.config.project import Project
 
 
 # --------------------------------------------------------------------------------------------------------------------
 
-class CmdOSIOMQTTClient(object):
+class CmdAWSTopicSubscriber(object):
     """unix command line handler"""
 
     def __init__(self):
         """
         Constructor
         """
-        self.__parser = optparse.OptionParser(usage="%prog [TOPIC_1 .. TOPIC_N] [-c { C | G | P | S | X }] [-p [-e]] "
-                                                    "[-v]", version="%prog 1.0")
+        self.__parser = optparse.OptionParser(usage="%prog { -t TOPIC | -c { C | G | P | S | X } } [-v]",
+                                              version="%prog 1.0")
+
+        # compulsory...
+        self.__parser.add_option("--topic", "-t", type="string", nargs=1, action="store", dest="topic",
+                                 help="topic path")
+
+        self.__parser.add_option("--channel", "-c", type="string", nargs=1, action="store", dest="channel",
+                                 help="publication channel")
 
         # optional...
-        self.__parser.add_option("--channel", "-c", type="string", nargs=1, action="store", dest="channel",
-                                 help="subscribe to channel")
-
-        self.__parser.add_option("--pub", "-p", action="store_true", dest="publish", default=False,
-                                 help="publish publication documents from stdin")
-
-        self.__parser.add_option("--echo", "-e", action="store_true", dest="echo", default=False,
-                                 help="echo stdin to stdout (if publishing)")
-
         self.__parser.add_option("--verbose", "-v", action="store_true", dest="verbose", default=False,
                                  help="report narrative to stderr")
 
@@ -40,7 +38,7 @@ class CmdOSIOMQTTClient(object):
     # ----------------------------------------------------------------------------------------------------------------
 
     def is_valid(self):
-        if self.echo and not self.publish:
+        if bool(self.topic) == bool(self.channel):
             return False
 
         if self.channel and not Project.is_valid_channel(self.channel):
@@ -52,23 +50,13 @@ class CmdOSIOMQTTClient(object):
     # ----------------------------------------------------------------------------------------------------------------
 
     @property
-    def topics(self):
-        return self.__args
+    def topic(self):
+        return self.__opts.topic
 
 
     @property
     def channel(self):
         return self.__opts.channel
-
-
-    @property
-    def publish(self):
-        return self.__opts.publish
-
-
-    @property
-    def echo(self):
-        return self.__opts.echo
 
 
     @property
@@ -88,5 +76,5 @@ class CmdOSIOMQTTClient(object):
 
 
     def __str__(self, *args, **kwargs):
-        return "CmdOSIOMQTTClient:{topics:%s, channel:%s, publish:%s, echo:%s, verbose:%s, args:%s}" % \
-               (self.topics, self.channel, self.publish, self.echo, self.verbose, self.args)
+        return "CmdAWSTopicSubscriber:{topic:%s, channel:%s, verbose:%s, args:%s}" % \
+                    (self.topic, self.channel, self.verbose, self.args)
